@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo.draw
+package top.colter.mirai.plugin.dschat.draw
 
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
@@ -10,13 +10,13 @@ import org.jetbrains.skia.Color
 import org.jetbrains.skia.Image
 import org.jetbrains.skia.paragraph.TextStyle
 import org.jetbrains.skiko.toBitmap
-import top.colter.mirai.plugin.weibo.WeiboConfig
-import top.colter.mirai.plugin.weibo.data.WeiboDynamic
-import top.colter.mirai.plugin.weibo.data.WeiboEmoji
-import top.colter.mirai.plugin.weibo.data.WeiboFullContent
-import top.colter.mirai.plugin.weibo.draw.component.Author
-import top.colter.mirai.plugin.weibo.draw.component.SmallAuthor
-import top.colter.mirai.plugin.weibo.tools.*
+import top.colter.mirai.plugin.dschat.WeiboConfig
+import top.colter.mirai.plugin.dschat.data.WeiboDynamic
+import top.colter.mirai.plugin.dschat.data.WeiboEmoji
+import top.colter.mirai.plugin.dschat.data.WeiboFullContent
+import top.colter.mirai.plugin.dschat.draw.component.Author
+import top.colter.mirai.plugin.dschat.draw.component.SmallAuthor
+import top.colter.mirai.plugin.dschat.tools.*
 import top.colter.skiko.*
 import top.colter.skiko.data.RichParagraphBuilder
 import top.colter.skiko.data.Shadow

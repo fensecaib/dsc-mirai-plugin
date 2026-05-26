@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo.tools
+package top.colter.mirai.plugin.dschat.tools
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.SerializationException
@@ -8,8 +8,8 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.MiraiLogger
-import top.colter.mirai.plugin.weibo.WeiboDynamicPlugin
-import top.colter.mirai.plugin.weibo.client.WeiboClient
+import top.colter.mirai.plugin.dschat.DsChatPlugin
+import top.colter.mirai.plugin.dschat.client.WeiboClient
 import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
@@ -22,9 +22,9 @@ public val weiboClient: WeiboClient = WeiboClient()
 
 val logger by lazy {
     try {
-        WeiboDynamicPlugin.logger
+        DsChatPlugin.logger
     } catch (_: Throwable) {
-        MiraiLogger.Factory.create(WeiboDynamicPlugin::class)
+        MiraiLogger.Factory.create(DsChatPlugin::class)
     }
 }
 
@@ -147,7 +147,7 @@ fun Boolean.ifFalse(block: () -> Unit) = if (!this) { block(); false } else true
 
 fun loadResourceBytes(path: String): ByteArray? {
     return try {
-        WeiboDynamicPlugin.getResourceAsStream(path)?.readBytes()
+        DsChatPlugin.getResourceAsStream(path)?.readBytes()
     } catch (e: IOException) {
         logger.error("加载资源失败 $path", e)
         null

@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo.client
+package top.colter.mirai.plugin.dschat.client
 
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -9,7 +9,7 @@ import io.ktor.utils.io.errors.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.supervisorScope
-import top.colter.mirai.plugin.weibo.tools.decode
+import top.colter.mirai.plugin.dschat.tools.decode
 
 public interface KtorClient : Closeable {
     public val clientCount: Int

@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo.data
+package top.colter.mirai.plugin.dschat.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

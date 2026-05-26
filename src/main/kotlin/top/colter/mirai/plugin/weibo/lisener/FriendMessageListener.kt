@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo.lisener
+package top.colter.mirai.plugin.dschat.lisener
 
 import net.mamoe.mirai.event.SimpleListenerHost
 

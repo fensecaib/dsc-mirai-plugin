@@ -4,4 +4,4 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = "weibo-dynamic"
+rootProject.name = "ds-chat-mirai"

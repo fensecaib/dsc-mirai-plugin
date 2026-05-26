@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo.client
+package top.colter.mirai.plugin.dschat.client
 
 import kotlinx.serialization.json.JsonElement
 
