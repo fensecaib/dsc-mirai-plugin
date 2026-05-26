@@ -1,9 +1,9 @@
-package top.colter.mirai.plugin.weibo.lisener
+package top.colter.mirai.plugin.dschat.lisener
 
 import net.mamoe.mirai.event.EventHandler
 import net.mamoe.mirai.event.SimpleListenerHost
 import net.mamoe.mirai.event.events.MessageEvent
-import top.colter.mirai.plugin.weibo.tools.logger
+import top.colter.mirai.plugin.dschat.tools.logger
 import kotlin.coroutines.CoroutineContext
 
 object MessageListener: SimpleListenerHost() {

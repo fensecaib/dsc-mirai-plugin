@@ -1,9 +1,9 @@
-package top.colter.mirai.plugin.weibo.tools
+package top.colter.mirai.plugin.dschat.tools
 
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import org.jetbrains.skia.Image
-import top.colter.mirai.plugin.weibo.WeiboDynamicPlugin
+import top.colter.mirai.plugin.dschat.DsChatPlugin
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.time.Instant
@@ -28,7 +28,7 @@ annotation class Cache (
 )
 
 val cachePath: Path by lazy {
-    WeiboDynamicPlugin.dataFolderPath.resolve("cache")
+    DsChatPlugin.dataFolderPath.resolve("cache")
 }
 
 fun CacheType.cachePath(): Path {

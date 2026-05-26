@@ -1,11 +1,11 @@
-package top.colter.mirai.plugin.weibo.draw
+package top.colter.mirai.plugin.dschat.draw
 
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.Data
 import org.jetbrains.skia.Image
 import org.jetbrains.skia.Surface
 import org.jetbrains.skia.svg.SVGDOM
-import top.colter.mirai.plugin.weibo.tools.loadResourceBytes
+import top.colter.mirai.plugin.dschat.tools.loadResourceBytes
 import java.util.*
 
 

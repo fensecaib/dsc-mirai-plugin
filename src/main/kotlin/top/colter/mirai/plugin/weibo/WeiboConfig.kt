@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo
+package top.colter.mirai.plugin.dschat
 
 import kotlinx.serialization.Serializable
 import net.mamoe.mirai.console.data.AutoSavePluginConfig

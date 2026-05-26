@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo.client
+package top.colter.mirai.plugin.dschat.client
 
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
@@ -8,7 +8,7 @@ import io.ktor.client.plugins.cookies.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.json.Json
-import top.colter.mirai.plugin.weibo.tools.json
+import top.colter.mirai.plugin.dschat.tools.json
 
 
 public open class WeiboClient(private val timeout: Long = 15_000L): AbstractKtorClient() {

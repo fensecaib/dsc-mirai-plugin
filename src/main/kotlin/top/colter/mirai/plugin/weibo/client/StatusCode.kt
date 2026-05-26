@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo.client
+package top.colter.mirai.plugin.dschat.client
 
 public interface StatusCode {
     public val code: Int

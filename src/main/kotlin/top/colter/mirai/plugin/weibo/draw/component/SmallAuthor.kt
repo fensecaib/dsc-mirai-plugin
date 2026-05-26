@@ -1,9 +1,9 @@
-package top.colter.mirai.plugin.weibo.draw.component
+package top.colter.mirai.plugin.dschat.draw.component
 
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.Image
-import top.colter.mirai.plugin.weibo.draw.makeImage
-import top.colter.mirai.plugin.weibo.tools.loadResourceBytes
+import top.colter.mirai.plugin.dschat.draw.makeImage
+import top.colter.mirai.plugin.dschat.tools.loadResourceBytes
 import top.colter.skiko.*
 import top.colter.skiko.data.LayoutAlignment
 import top.colter.skiko.layout.Layout

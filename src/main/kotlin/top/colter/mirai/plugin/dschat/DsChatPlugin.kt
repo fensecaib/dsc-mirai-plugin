@@ -1,6 +1,5 @@
-package top.colter.mirai.plugin.weibo
+package top.colter.mirai.plugin.dschat
 
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
@@ -8,10 +7,8 @@ import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.event.registerTo
 import net.mamoe.mirai.utils.info
 import org.jetbrains.skia.FontStyle
-import top.colter.mirai.plugin.weibo.data.WeiboDynamic
-import top.colter.mirai.plugin.weibo.draw.DynamicDraw
-import top.colter.mirai.plugin.weibo.lisener.GroupMessageListener
-import top.colter.mirai.plugin.weibo.tools.weiboClient
+import top.colter.mirai.plugin.dschat.deepseek.DeepSeekConfig
+import top.colter.mirai.plugin.dschat.lisener.DeepSeekListener
 import top.colter.skiko.FontUtils
 import top.colter.skiko.FontUtils.loadTypeface
 import top.colter.skiko.FontUtils.matchFamily
@@ -21,10 +18,10 @@ import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.name
 
 
-object WeiboDynamicPlugin : KotlinPlugin(
+object DsChatPlugin : KotlinPlugin(
     JvmPluginDescription(
-        id = "top.colter.weibo-dynamic",
-        name = "Weibo Dynamic",
+        id = "top.colter.ds-chat-mirai",
+        name = "DS Chat Mirai",
         version = "1.0.0",
     ) {
         author("Colter")
@@ -34,7 +31,7 @@ object WeiboDynamicPlugin : KotlinPlugin(
     override fun onEnable() {
         logger.info { "Plugin loaded" }
 
-        WeiboConfig.reload()
+        DeepSeekConfig.reload()
 
         launch {
             val fontFolderPath = dataFolderPath.resolve("font")
@@ -55,16 +52,12 @@ object WeiboDynamicPlugin : KotlinPlugin(
                 }
             }
 
-//            val msgId = "OtW24iEkS"
-//            val dynamic = weiboClient.get<WeiboDynamic>("https://weibo.com/ajax/statuses/show?id=$msgId")
-//            DynamicDraw(dynamic)
-
-            GroupMessageListener.registerTo(globalEventChannel())
+            DeepSeekListener.registerTo(globalEventChannel())
         }
 
     }
 
     override fun onDisable() {
-        WeiboConfig.save()
+        DeepSeekConfig.save()
     }
 }

@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo.draw.component
+package top.colter.mirai.plugin.dschat.draw.component
 
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.Image

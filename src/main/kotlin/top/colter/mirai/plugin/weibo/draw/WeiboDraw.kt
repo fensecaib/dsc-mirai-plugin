@@ -1,8 +1,8 @@
-package top.colter.mirai.plugin.weibo.draw
+package top.colter.mirai.plugin.dschat.draw
 
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.Image
-import top.colter.mirai.plugin.weibo.WeiboConfig
+import top.colter.mirai.plugin.dschat.WeiboConfig
 import top.colter.skiko.*
 import top.colter.skiko.data.Gradient
 import top.colter.skiko.layout.Layout

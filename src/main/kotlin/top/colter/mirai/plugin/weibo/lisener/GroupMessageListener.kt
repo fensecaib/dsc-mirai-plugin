@@ -1,4 +1,4 @@
-package top.colter.mirai.plugin.weibo.lisener
+package top.colter.mirai.plugin.dschat.lisener
 
 import net.mamoe.mirai.contact.Contact.Companion.sendImage
 import net.mamoe.mirai.event.EventHandler
@@ -9,13 +9,13 @@ import net.mamoe.mirai.message.data.Image
 import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.message.data.toMessageChain
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
-import top.colter.mirai.plugin.weibo.WeiboConfig
-import top.colter.mirai.plugin.weibo.data.WeiboDynamic
-import top.colter.mirai.plugin.weibo.data.WeiboFullContent
-import top.colter.mirai.plugin.weibo.draw.DynamicDraw
-import top.colter.mirai.plugin.weibo.draw.formatterOr
-import top.colter.mirai.plugin.weibo.tools.logger
-import top.colter.mirai.plugin.weibo.tools.weiboClient
+import top.colter.mirai.plugin.dschat.WeiboConfig
+import top.colter.mirai.plugin.dschat.data.WeiboDynamic
+import top.colter.mirai.plugin.dschat.data.WeiboFullContent
+import top.colter.mirai.plugin.dschat.draw.DynamicDraw
+import top.colter.mirai.plugin.dschat.draw.formatterOr
+import top.colter.mirai.plugin.dschat.tools.logger
+import top.colter.mirai.plugin.dschat.tools.weiboClient
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
