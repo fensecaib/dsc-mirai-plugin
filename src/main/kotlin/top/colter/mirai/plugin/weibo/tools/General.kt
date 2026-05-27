@@ -76,6 +76,7 @@ public val json: Json = Json {
     ignoreUnknownKeys = true
     isLenient = true
     allowStructuredMapKeys = true
+    encodeDefaults = true
 }
 
 public inline fun <reified T> String.decode(): T = json.parseToJsonElement(this).decode()

@@ -22,7 +22,7 @@ dependencies {
     implementation("io.ktor:ktor-client-encoding:2.1.0")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.1.0")
     implementation("com.cronutils:cron-utils:9.2.0")
-
+    implementation("org.jsoup:jsoup:1.18.1")
     implementation("com.google.zxing:javase:3.5.1")
     implementation("org.jetbrains.kotlinx:atomicfu:0.19.0")
 //    api("org.jetbrains.skiko:skiko-awt:0.7.71")
