@@ -19,6 +19,8 @@ enum class CacheType(val path: String) {
     EMOJI("emoji"),
     USER("user"),
     OTHER("other"),
+    ICON_HERO("dota2/icons/heroes"),
+    ICON_ITEM("dota2/icons/items"),
     UNKNOWN(""),
 }
 

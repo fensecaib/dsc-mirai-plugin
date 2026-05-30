@@ -9,7 +9,6 @@ import net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import org.junit.Before
 import org.junit.Test
-import top.colter.mirai.plugin.dschat.WeiboDynamicPlugin
 import top.colter.mirai.plugin.dschat.client.WeiboClient
 import top.colter.mirai.plugin.dschat.data.WeiboDynamic
 import top.colter.mirai.plugin.dschat.data.WeiboEmoji

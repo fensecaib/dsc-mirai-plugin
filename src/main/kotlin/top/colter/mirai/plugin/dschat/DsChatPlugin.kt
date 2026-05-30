@@ -8,6 +8,7 @@ import net.mamoe.mirai.event.registerTo
 import net.mamoe.mirai.utils.info
 import org.jetbrains.skia.FontStyle
 import top.colter.mirai.plugin.dschat.deepseek.DeepSeekConfig
+import top.colter.mirai.plugin.dschat.dota2.Dota2Service
 import top.colter.mirai.plugin.dschat.lisener.DeepSeekListener
 import top.colter.skiko.FontUtils
 import top.colter.skiko.FontUtils.loadTypeface
@@ -32,6 +33,8 @@ object DsChatPlugin : KotlinPlugin(
         logger.info { "Plugin loaded" }
 
         DeepSeekConfig.reload()
+
+        Dota2Service.init()
 
         launch {
             val fontFolderPath = dataFolderPath.resolve("font")
