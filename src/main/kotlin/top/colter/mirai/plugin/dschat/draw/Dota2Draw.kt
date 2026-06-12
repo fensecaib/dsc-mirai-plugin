@@ -1,7 +1,12 @@
 package top.colter.mirai.plugin.dschat.draw
 
 import org.jetbrains.skia.Color
+import org.jetbrains.skia.Font
 import org.jetbrains.skia.Image
+import org.jetbrains.skia.Paint
+import org.jetbrains.skia.PaintMode
+import org.jetbrains.skia.RRect
+import org.jetbrains.skia.Surface
 import org.jetbrains.skia.paragraph.TextStyle
 import top.colter.mirai.plugin.dschat.deepseek.DeepSeekConfig
 import top.colter.skiko.*
@@ -66,6 +71,52 @@ private fun rankColor(tier: Int): Int = when(tier/10) {
     8 -> Color.makeRGB(230, 180, 80); 7 -> Color.makeRGB(200, 120, 60)
     6 -> Color.makeRGB(180, 120, 210); else -> C_TXT2
 }
+private fun sideLabel(label: String) = if (label == "RADIANT") "天辉" else "夜魇"
+private fun resultLabel(won: Boolean) = if (won) "胜利" else "战败"
+private fun stampLabel(tag: String) = when {
+    "战犯" in tag -> "战犯"
+    "SVP" in tag -> "SVP"
+    "MVP" in tag -> "MVP"
+    else -> tag
+}
+
+private fun makeStampImage(label: String, accent: Int): Image {
+    val text = "[$label]"
+    val width = 74
+    val height = 34
+    val surface = Surface.makeRasterN32Premul(width, height)
+    val canvas = surface.canvas
+    canvas.clear(Color.TRANSPARENT)
+
+    val borderPaint = Paint().apply {
+        color = accent
+        mode = PaintMode.STROKE
+        strokeWidth = 2.2f
+    }
+    val bgPaint = Paint().apply {
+        color = accent.withAlpha(0.10f)
+        mode = PaintMode.FILL
+    }
+    val textPaint = Paint().apply {
+        color = accent
+    }
+    val stampFont = FontUtils.defaultFont?.let { Font(it, 12f) } ?: Font().apply { size = 12f }
+
+    canvas.save()
+    canvas.rotate(-10f, width / 2f, height / 2f)
+    val r = RRect.makeLTRB(7f, 8f, width - 7f, height - 8f, 4f)
+    canvas.drawRRect(r, bgPaint)
+    canvas.drawRRect(r, borderPaint)
+    val textWidth = stampFont.measureTextWidth(text, textPaint)
+    canvas.drawString(text, (width - textWidth) / 2f, 22f, stampFont, textPaint)
+    canvas.restore()
+
+    borderPaint.close()
+    bgPaint.close()
+    textPaint.close()
+    stampFont.close()
+    return surface.makeImageSnapshot()
+}
 
 suspend fun dota2MatchDraw(report: Dota2MatchReport): Image? {
     Dp.factor = DeepSeekConfig.image.factor
@@ -84,25 +135,27 @@ fun Layout.sep() = Box(Modifier().fillMaxWidth().height(1.dp).background(C_BORDE
 
 fun Layout.topBar(r: Dota2MatchReport) {
     Row(Modifier().fillMaxWidth().height(44.dp).background(C_HDR), alignment=LayoutAlignment.CENTER_LEFT) {
-        Text(text="  #${r.matchId}", color=C_BLUE, fontSize=20.dp, fontFamily=ff())
-        Text(text="  ${r.gameMode}", color=C_TXT2, fontSize=18.dp, fontFamily=ff())
-        Text(text="  ${fmtDur(r.duration)}", color=C_TXT2, fontSize=18.dp, fontFamily=ff())
-        Box(Modifier().width(16.dp).height(1.dp))
-        Text(text=fmtTs(r.startTime), color=C_DIM, fontSize=16.dp, fontFamily=ff())
+        Row(Modifier().width(720.dp).height(44.dp), alignment=LayoutAlignment.CENTER_LEFT) {
+            Text(text="  比赛编号#${r.matchId}", color=C_BLUE, fontSize=20.dp, fontFamily=ff())
+            Text(text="  ${r.gameMode}", color=C_TXT2, fontSize=18.dp, fontFamily=ff())
+            Text(text="  ${fmtDur(r.duration)}", color=C_TXT2, fontSize=18.dp, fontFamily=ff())
+        }
+        Box(Modifier().width(340.dp).height(44.dp), alignment=LayoutAlignment.CENTER_RIGHT) {
+            Text(text="${fmtTs(r.startTime)}  ", color=C_DIM, fontSize=16.dp, fontFamily=ff(), alignment=LayoutAlignment.CENTER_RIGHT)
+        }
     }
 }
 
 fun Layout.teamTable(label: String, score: Int, won: Boolean, players: List<Dota2PlayerCard>) {
     val accent = if(won) C_GREEN else C_RED
     Row(Modifier().fillMaxWidth().height(34.dp).background(accent.withAlpha(0.10f)), alignment=LayoutAlignment.CENTER_LEFT) {
-        Text(text="  $label  ", color=accent, fontSize=22.dp, fontFamily=ff())
-        Text(text="$score  ${if(won) "WIN" else "LOSE"}", color=accent, fontSize=22.dp, fontFamily=ff())
+        Text(text="  ${sideLabel(label)}  击杀数$score  ${resultLabel(won)}", color=accent, fontSize=22.dp, fontFamily=ff())
     }
     // 表头 — 每列宽度与数据行 playerRow 严格对齐，修改时两处同步
     Row(Modifier().fillMaxWidth().height(24.dp).background(C_ODD), alignment=LayoutAlignment.CENTER_LEFT) {
         hdr("",22.dp); hdr("英雄",68.dp); hdr("玩家",120.dp); hdr("Lv",26.dp); hdr("K",26.dp); hdr("D",26.dp); hdr("A",26.dp)
-        hdr("KDA",42.dp); hdr("CS",60.dp); hdr("NET",50.dp); hdr("GPM",38.dp); hdr("XPM",38.dp)
-        hdr("伤害",50.dp); hdr("治疗",34.dp); hdr("物品", 320.dp); hdr("A杖", 50.dp)
+        hdr("KDA",42.dp); hdr("补刀",60.dp); hdr("财产",50.dp); hdr("GPM",38.dp); hdr("XPM",38.dp)
+        hdr("伤害",50.dp); hdr("治疗",34.dp); itemHdr(320.dp); hdr("A杖", 50.dp)
     }
     players.forEachIndexed{i,p->
         val b = when{ p.isMvp-> C_GREEN.withAlpha(0.07f); p.isSvp-> C_GOLD.withAlpha(0.07f)
@@ -139,8 +192,8 @@ fun Layout.playerRow(idx: Int, p: Dota2PlayerCard, bg: Int) {
             }
         }
         // 玩家名称 + 段位
-        Box(Modifier().width(120.dp).height(rowH).margin(left=2.dp), alignment=LayoutAlignment.CENTER_LEFT) {
-            Column {
+        Box(Modifier().width(120.dp).height(rowH).margin(0.dp, 0.dp, 0.dp, 2.dp), alignment=LayoutAlignment.CENTER_LEFT) {
+            Column(Modifier().width(118.dp).height(34.dp), alignment=LayoutAlignment.CENTER_LEFT) {
                 Text(text=displayName, color=C_TXT, fontSize=14.dp, fontFamily=ff())
                 if (p.rankName.isNotEmpty()) {
                     Text(text=p.rankName, color=rankColor(p.rankTier), fontSize=11.dp, fontFamily=ff())
@@ -210,6 +263,15 @@ fun Layout.hdr(txt: String, w: Dp) {
     }
 }
 
+fun Layout.itemHdr(w: Dp) {
+    Row(Modifier().width(w).height(24.dp), alignment=LayoutAlignment.CENTER_LEFT) {
+        hdr("物品", 192.dp)
+        hdr("中立", 34.dp)
+        Box(Modifier().width(8.dp).height(24.dp))
+        hdr("背包", 86.dp)
+    }
+}
+
 // itemSlot — 单个物品格子。s=槽尺寸(主28/背包24)，neutral=中立物品(金色边框)，icon=null时显示占位"·"
 fun Layout.itemSlot(icon: Image? = null, s: Dp = 28.dp, neutral: Boolean = false) {
     val bc = when { neutral -> C_GOLD.withAlpha(0.3f); s < 28.dp -> C_DIM.withAlpha(0.1f); else -> C_BORDER }
@@ -224,7 +286,7 @@ fun Layout.itemSlot(icon: Image? = null, s: Dp = 28.dp, neutral: Boolean = false
 
 fun Layout.analysisBlock(r: Dota2MatchReport) {
     Row(Modifier().fillMaxWidth().height(28.dp).background(C_HDR), alignment=LayoutAlignment.CENTER_LEFT) {
-        Text(text="  ANALYZE", color=C_BLUE, fontSize=16.dp, fontFamily=ff())
+        Text(text="  分析详情", color=C_BLUE, fontSize=16.dp, fontFamily=ff())
     }
     if (r.mvpReason != "N/A") {
         val icon = r.players.find { it.isMvp }?.heroIcon
@@ -239,15 +301,22 @@ fun Layout.analysisBlock(r: Dota2MatchReport) {
 }
 
 fun Layout.aLine(accent: Int, tag: String, name: String, reason: String, heroIcon: Image? = null) {
-    Column(Modifier().fillMaxWidth().padding(top=4.dp,bottom=4.dp,left=12.dp,right=12.dp)) {
-        Row(Modifier().fillMaxWidth().margin(bottom=3.dp), alignment=LayoutAlignment.CENTER_LEFT) {
+    val stamp = makeStampImage(stampLabel(tag), accent)
+    val tagWidth = when {
+        tag.length >= 5 -> 96.dp
+        tag.length >= 3 -> 64.dp
+        else -> 50.dp
+    }
+    Column(Modifier().fillMaxWidth().padding(4.dp, 12.dp, 4.dp, 12.dp)) {
+        Row(Modifier().fillMaxWidth().margin(0.dp, 0.dp, 3.dp, 0.dp), alignment=LayoutAlignment.CENTER_LEFT) {
             if (heroIcon != null) {
-                Image(image=heroIcon, modifier=Modifier().width(42.dp).height(24.dp).margin(right=5.dp))
+                Image(image=heroIcon, modifier=Modifier().width(42.dp).height(24.dp).margin(0.dp, 5.dp, 0.dp, 0.dp))
             }
-            Box(Modifier().padding(top=1.dp,bottom=1.dp,left=8.dp,right=8.dp).background(accent).border(0.dp,3.dp)) {
-                Text(text=tag, color=Color.WHITE, fontSize=13.dp, fontFamily=ff())
+            Box(Modifier().width(tagWidth).height(22.dp).background(accent).border(0.dp,3.dp), alignment=LayoutAlignment.CENTER) {
+                Text(text=tag, color=Color.WHITE, fontSize=12.dp, fontFamily=ff(), alignment=LayoutAlignment.CENTER)
             }
-            Text(text="  $name", color=C_TXT, fontSize=15.dp, fontFamily=ff())
+            Text(text="  $name", color=C_TXT, fontSize=15.dp, fontFamily=ff(), modifier=Modifier().maxWidth(360.dp))
+            Image(image=stamp, modifier=Modifier().width(74.dp).height(34.dp).margin(0.dp, 0.dp, 0.dp, 6.dp))
         }
         val style = TextStyle().setColor(C_TXT2).setFontSize(13.px).setFontFamily(ff())
         val paragraph = RichParagraphBuilder(style)
@@ -277,12 +346,13 @@ suspend fun dota2FullAnalyzeDraw(report: Dota2MatchReport): Image? {
 
 fun Layout.fullAnalysisBlock(r: Dota2MatchReport) {
     Row(Modifier().fillMaxWidth().height(28.dp).background(C_HDR), alignment=LayoutAlignment.CENTER_LEFT) {
-        Text(text="  ANALYZE · 双阵营", color=C_BLUE, fontSize=16.dp, fontFamily=ff())
+        Text(text="  分析详情", color=C_BLUE, fontSize=16.dp, fontFamily=ff())
     }
     // 天辉
     if (r.radiantMvpReason.isNotBlank() && r.radiantMvpReason != "N/A" && r.radiantMvpReason != "分析失败") {
         val icon = r.players.find { it.isRadiant && it.heroName in r.radiantMvp }?.heroIcon
-        aLine(C_GREEN, "天辉MVP/SVP", r.radiantMvp, r.radiantMvpReason, icon)
+        val tag = if (r.radiantWin) "天辉MVP" else "天辉SVP"
+        aLine(if (r.radiantWin) C_GREEN else C_GOLD, tag, r.radiantMvp, r.radiantMvpReason, icon)
     }
     if (r.radiantCriminalReason.isNotBlank() && r.radiantCriminalReason != "分析失败") {
         val icon = r.players.find { it.isRadiant && it.heroName in r.radiantCriminal }?.heroIcon
@@ -291,7 +361,8 @@ fun Layout.fullAnalysisBlock(r: Dota2MatchReport) {
     // 夜魇
     if (r.direMvpReason.isNotBlank() && r.direMvpReason != "N/A" && r.direMvpReason != "分析失败") {
         val icon = r.players.find { !it.isRadiant && it.heroName in r.direMvp }?.heroIcon
-        aLine(C_GOLD, "夜魇MVP/SVP", r.direMvp, r.direMvpReason, icon)
+        val tag = if (r.radiantWin) "夜魇SVP" else "夜魇MVP"
+        aLine(if (r.radiantWin) C_GOLD else C_GREEN, tag, r.direMvp, r.direMvpReason, icon)
     }
     if (r.direCriminalReason.isNotBlank() && r.direCriminalReason != "分析失败") {
         val icon = r.players.find { !it.isRadiant && it.heroName in r.direCriminal }?.heroIcon

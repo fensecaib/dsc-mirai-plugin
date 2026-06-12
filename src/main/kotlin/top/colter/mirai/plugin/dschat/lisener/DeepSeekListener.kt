@@ -9,6 +9,7 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import top.colter.mirai.plugin.dschat.DsChatPlugin
 import top.colter.mirai.plugin.dschat.agent.AgentRouter
+import top.colter.mirai.plugin.dschat.agent.FetchService
 import top.colter.mirai.plugin.dschat.deepseek.*
 import top.colter.mirai.plugin.dschat.draw.chatDraw
 import top.colter.mirai.plugin.dschat.draw.dota2MatchDraw
@@ -81,28 +82,59 @@ object DeepSeekListener : SimpleListenerHost() {
 
         subject.sendMessage("请稍等...")
 
+        // URL预检测：用户指定URL时通过Tavily批量提取JS渲染后的页面内容
+        val urlPattern = Regex("""https?://[^\s\u4e00-\u9fff]+""")
+        val detectedUrls = urlPattern.findAll(prompt).map { it.value }.toList()
+        val fetchedContents = mutableListOf<String>()
+        val failedUrls = mutableListOf<String>()
+        if (detectedUrls.isNotEmpty()) {
+            val results = FetchService.fetchBatchViaTavily(detectedUrls)
+            for (r in results) {
+                if (r.success) fetchedContents.add("===页面内容: ${r.url}===\n${r.content}")
+                else failedUrls.add(r.url)
+            }
+            // Tavily预抓取汇总：一行日志覆盖成功/失败数
+            logger.info("Tavily预抓取: ${fetchedContents.size}成功 ${failedUrls.size}失败 / ${detectedUrls.size}URL")
+        }
+
         val config = DeepSeekConfig.chat
         val systemPrompt = readSystemPrompt()
 
-        // 构建消息列表（含历史上下文）
+        // 构建增强prompt：成功内容注入上下文，失败URL降级告知LLM
+        val augmentedPrompt = if (detectedUrls.isNotEmpty()) {
+            val sb = StringBuilder(prompt)
+            if (fetchedContents.isNotEmpty()) {
+                sb.append("\n\n[系统已预先抓取以下网页的完整正文，请直接基于这些内容回复]\n")
+                sb.append(fetchedContents.joinToString("\n\n---\n\n"))
+            }
+            if (failedUrls.isNotEmpty()) {
+                val failedList = failedUrls.joinToString("、") { it }
+                sb.append("\n\n[以下网页抓取失败: $failedList。")
+                sb.append("请在回复的第一句说:\"进行联网搜索地址 $failedList 失败。\"")
+                sb.append("然后使用web_search和web_fetch获取替代内容完成任务。]")
+            }
+            sb.toString()
+        } else prompt
+
+        // 构建消息列表（含历史上下文，user消息使用增强版prompt）
         var messages: MutableList<ChatMessage>
         if (config.enableMemory) {
-            messages = buildMessagesWithContext(prompt, key, systemPrompt)
+            messages = buildMessagesWithContext(augmentedPrompt, key, systemPrompt)
         } else {
             messages = mutableListOf(
                 ChatMessage("system", systemPrompt),
-                ChatMessage("user", prompt)
+                ChatMessage("user", augmentedPrompt)
             )
         }
 
         // Agent路由：根据配置选择纯对话或联网搜索Agent
         val agent = AgentRouter.create(DeepSeekConfig)
-        agent.prepareMessages(messages, prompt, systemPrompt)
+        agent.prepareMessages(messages, augmentedPrompt, systemPrompt)
 
         var round = 0
         var finalContent: String? = null
 
-        // ReAct工具调用循环
+        // ReAct工具调用循环：成功时由finalContent中止，超限时由shouldContinue中止
         while (agent.shouldContinue(round)) {
             val request = ChatRequest(
                 model = DeepSeekConfig.api.model,
@@ -166,9 +198,11 @@ object DeepSeekListener : SimpleListenerHost() {
                 }
             )
 
+            // 拿到最终回复后跳出ReAct循环
             if (finalContent != null) break
         }
 
+        // 循环超限仍未拿到回复时的保底文案
         val content = finalContent ?: "(搜索轮次超限，请简化问题重试)"
 
         // 长文本转图片输出

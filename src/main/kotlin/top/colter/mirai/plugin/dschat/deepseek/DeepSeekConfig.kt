@@ -47,12 +47,13 @@ object DeepSeekConfig : AutoSavePluginConfig("DeepSeekConfig") {
 
     @ValueDescription(
         """
-        联网搜索配置:
-          enabled: 是否启用联网搜索（默认 true）
-          maxRounds: 工具调用最大轮数（默认 5）
-          searchTimeout: 搜索超时秒数（默认 30）
-          fetchMaxChars: 网页抓取最大字符数（默认 8000）
-          fetchTimeout: 网页抓取超时秒数（默认 15）
+         联网搜索配置:
+           enabled: 是否启用联网搜索（默认 true）
+           maxRounds: 工具调用最大轮数（默认 15）
+           searchTimeout: 搜索超时秒数（默认 30）
+           fetchMaxChars: 网页抓取最大字符数（默认 8000）
+           fetchTimeout: 网页抓取超时秒数（默认 15）
+           tavilyApiKey: Tavily Extract API密钥，用户指定URL时直接调用Tavily获取JS渲染后的纯文本
     """
     )
     val webSearch: WebSearchConfig by value()
@@ -92,8 +93,9 @@ data class ImageConfig(
 @Serializable
 data class WebSearchConfig(
     var enabled: Boolean = true,
-    var maxRounds: Int = 5,
+    var maxRounds: Int = 15,
     var searchTimeout: Int = 30,
     var fetchMaxChars: Int = 8000,
     var fetchTimeout: Int = 15,
+    var tavilyApiKey: String = "",
 )

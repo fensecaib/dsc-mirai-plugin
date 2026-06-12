@@ -420,15 +420,53 @@ GPM%/DMG%/TWR% show how this player ranks among peers on the same hero. Use them
     )
 
     private fun parseAnalysisResult(content: String): DsAnalysisResult? {
+        val tagRegex = Regex("^\\[(MVP|SVP|战犯)]")
+        val normalizedLines = content.lines()
+            .map { it.trim().removePrefix(">").trim() }
+            .filter { it.isNotBlank() }
+
+        fun cleanSection(lines: List<String>): String {
+            return lines
+                .map { it.trim().removePrefix(">").trim() }
+                .filter { it.isNotBlank() }
+                .joinToString("\n")
+        }
+
+        fun guessName(firstLine: String): String {
+            val colonIndex = listOf(firstLine.indexOf(":"), firstLine.indexOf("："))
+                .filter { it >= 0 }
+                .minOrNull()
+            val rawName = if (colonIndex != null) {
+                firstLine.substring(0, colonIndex)
+            } else {
+                val markers = listOf("你这", "你的", "你", "这局", "这把")
+                val markerIndex = markers.map { firstLine.indexOf(it) }
+                    .filter { it > 0 }
+                    .minOrNull()
+                if (markerIndex != null) firstLine.substring(0, markerIndex) else firstLine
+            }
+            return rawName.trim().take(30).ifBlank { "?" }
+        }
+
         fun extract(tag: String): Pair<String, String>? {
-            val start = content.indexOf("[$tag]")
+            val tagText = "[$tag]"
+            val start = normalizedLines.indexOfFirst { it == tagText || it.startsWith("$tagText ") || it.startsWith("$tagText:") || it.startsWith("$tagText：") }
             if (start < 0) return null
-            val body = content.substring(start + tag.length + 2).trim()
-            // 找下一个段落标签(行首的[xxx]开头)，避免 [我] 等内嵌标记干扰
-            val end = body.indexOf("\n[")
-            val text = if (end > 0) body.substring(0, end).trim() else body.trim()
+
+            val head = normalizedLines[start].removePrefix(tagText).trim()
+            val bodyLines = buildList {
+                if (head.isNotBlank()) add(head)
+                for (i in start + 1 until normalizedLines.size) {
+                    val line = normalizedLines[i]
+                    if (tagRegex.containsMatchIn(line)) break
+                    add(line)
+                }
+            }
+
+            val text = cleanSection(bodyLines)
+            if (text.isBlank()) return null
             val firstLine = text.lines().firstOrNull()?.trim() ?: ""
-            val name = firstLine.split(":","：").firstOrNull()?.trim()?.take(30) ?: "?"
+            val name = guessName(firstLine)
             return name to text
         }
 
@@ -504,6 +542,11 @@ GPM%/DMG%/TWR% show how this player ranks among peers on the same hero. Use them
             )
         }
 
+        val mvpOrSvpCard = cards.find { if (won) it.isMvp else it.isSvp }
+            ?: findAnalysisCard(cards, dsResult?.mvpOrSvp)
+        val criminalCard = cards.find { it.isCriminal }
+            ?: findAnalysisCard(cards, dsResult?.criminal)
+
         return Dota2MatchReport(
             matchId = matchJson["match_id"]?.jsonPrimitive?.longOrNull ?: 0,
             duration = matchJson["duration"]?.jsonPrimitive?.intOrNull ?: 0,
@@ -513,11 +556,11 @@ GPM%/DMG%/TWR% show how this player ranks among peers on the same hero. Use them
             direScore = matchJson["dire_score"]?.jsonPrimitive?.intOrNull ?: 0,
             radiantWin = radiantWin,
             players = cards,
-            mvpName = if (won) (dsResult?.mvpOrSvp ?: "?") else "N/A",
+            mvpName = if (won) analysisDisplayName(mvpOrSvpCard, dsResult?.mvpOrSvp) else "N/A",
             mvpReason = if (won) (dsResult?.mvpOrSvpText ?: "分析失败") else "N/A",
-            svpName = if (!won) (dsResult?.mvpOrSvp ?: "?") else "N/A",
+            svpName = if (!won) analysisDisplayName(mvpOrSvpCard, dsResult?.mvpOrSvp) else "N/A",
             svpReason = if (!won) (dsResult?.mvpOrSvpText ?: "分析失败") else "N/A",
-            criminalName = dsResult?.criminal ?: "?",
+            criminalName = analysisDisplayName(criminalCard, dsResult?.criminal),
             criminalReason = dsResult?.criminalText ?: "分析失败"
         )
     }
@@ -566,6 +609,13 @@ GPM%/DMG%/TWR% show how this player ranks among peers on the same hero. Use them
             )
         }
 
+        val radiantCards = cards.filter { it.isRadiant }
+        val direCards = cards.filter { !it.isRadiant }
+        val radiantMvpCard = findAnalysisCard(radiantCards, r?.mvpOrSvp)
+        val radiantCriminalCard = findAnalysisCard(radiantCards, r?.criminal)
+        val direMvpCard = findAnalysisCard(direCards, d?.mvpOrSvp)
+        val direCriminalCard = findAnalysisCard(direCards, d?.criminal)
+
         return Dota2MatchReport(
             matchId = matchJson["match_id"]?.jsonPrimitive?.longOrNull ?: 0,
             duration = matchJson["duration"]?.jsonPrimitive?.intOrNull ?: 0,
@@ -576,11 +626,33 @@ GPM%/DMG%/TWR% show how this player ranks among peers on the same hero. Use them
             radiantWin = radiantWin, players = cards,
             mvpName = "N/A", mvpReason = "N/A", svpName = "N/A", svpReason = "N/A",
             criminalName = "N/A", criminalReason = "N/A",
-            radiantMvp = r?.mvpOrSvp ?: "?", radiantMvpReason = r?.mvpOrSvpText ?: "分析失败",
-            radiantCriminal = r?.criminal ?: "?", radiantCriminalReason = r?.criminalText ?: "分析失败",
-            direMvp = d?.mvpOrSvp ?: "?", direMvpReason = d?.mvpOrSvpText ?: "分析失败",
-            direCriminal = d?.criminal ?: "?", direCriminalReason = d?.criminalText ?: "分析失败"
+            radiantMvp = analysisDisplayName(radiantMvpCard, r?.mvpOrSvp),
+            radiantMvpReason = r?.mvpOrSvpText ?: "分析失败",
+            radiantCriminal = analysisDisplayName(radiantCriminalCard, r?.criminal),
+            radiantCriminalReason = r?.criminalText ?: "分析失败",
+            direMvp = analysisDisplayName(direMvpCard, d?.mvpOrSvp),
+            direMvpReason = d?.mvpOrSvpText ?: "分析失败",
+            direCriminal = analysisDisplayName(direCriminalCard, d?.criminal),
+            direCriminalReason = d?.criminalText ?: "分析失败"
         )
+    }
+
+    private fun findAnalysisCard(cards: List<Dota2PlayerCard>, name: String?): Dota2PlayerCard? {
+        if (name.isNullOrBlank()) return null
+        return cards.firstOrNull { card ->
+            val playerName = card.name.takeIf { it.isNotBlank() && it != "?" }
+            val heroName = card.heroName.takeIf { it.isNotBlank() }
+            (playerName != null && (playerName in name || name in playerName)) ||
+                (heroName != null && (heroName in name || name in heroName))
+        }
+    }
+
+    private fun analysisDisplayName(card: Dota2PlayerCard?, fallback: String?): String {
+        if (card != null) {
+            val playerName = card.name.takeIf { it.isNotBlank() && it != "?" }
+            return if (playerName != null) "${card.heroName}($playerName)" else card.heroName
+        }
+        return fallback?.take(30)?.ifBlank { "?" } ?: "?"
     }
 
     private fun rankName(rankTier: Int): String {

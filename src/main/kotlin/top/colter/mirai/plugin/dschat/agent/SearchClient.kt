@@ -39,36 +39,26 @@ object SearchClient {
     )
 
     suspend fun search(query: String): String {
-        var lastError: String? = null
-
-        // Tier 1: Exa MCP — 免费JSON-RPC，延迟 ~1.5s
+        // 三层后备：任一成功即返回，全失败才记录
         try {
             val result = searchExa(query)
             if (result.isNotBlank()) return result
-        } catch (e: Exception) {
-            lastError = "Exa: ${e.message}"
-            logger.warning("Search Exa failed: ${e.message}")
-        }
+        } catch (_: Exception) {}
 
-        // Tier 2: Parallel MCP — 免费JSON-RPC，延迟 ~2.5s
+        // Tier 2: Parallel MCP
         try {
             val result = searchParallel(query)
             if (result.isNotBlank()) return result
-        } catch (e: Exception) {
-            lastError = "Parallel: ${e.message}"
-            logger.warning("Search Parallel failed: ${e.message}")
-        }
+        } catch (_: Exception) {}
 
-        // Tier 3: DDG JSON Instant Answer — 免费百科查询，不限流
+        // Tier 3: DDG JSON
         try {
             val result = searchDdgJson(query)
             if (result.isNotBlank()) return result
-        } catch (e: Exception) {
-            lastError = "DDG: ${e.message}"
-            logger.warning("Search DDG failed: ${e.message}")
-        }
+        } catch (_: Exception) {}
 
-        return "所有搜索后端均失败。最后错误: $lastError"
+        logger.warning("Search all tiers failed for: $query")
+        return "所有搜索后端均失败"
     }
 
     // ── Exa MCP ──────────────────────────────────────────
